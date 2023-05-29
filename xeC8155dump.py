@@ -1,5 +1,6 @@
 import requests
 import re
+import warnings
 
 # Set the URL and headers
 url = "/addressbook/viewContact.php"
@@ -17,22 +18,21 @@ all_contacts = int(input("Enter the number of 'All Contacts' displayed in the Ad
 # Input PHPSESSID value from user
 phpsessid = input("Enter PHPSESSID value: ")
 
+# Suppress SSL warning
+requests.packages.urllib3.disable_warnings()
+
 # Initialize variables
 email_list = []
+
+# Suppress InsecureRequestWarning
+warnings.filterwarnings("ignore", category=requests.exceptions.InsecureRequestWarning)
 
 for contact_id in range(all_contacts):
     # Set the parameters
     params = {"contactId": str(contact_id)}
 
-    # Make the HTTPS request
-    response = requests.get(f"https://{ip_address}{url}", params=params, headers=headers)
-
-    # Print the request details
-    print("Request Details:")
-    print("URL:", response.url)
-    print("Parameters:", params)
-    print("Headers:", headers)
-    print()  # Add space between requests
+    # Make the HTTPS request and suppress SSL warning
+    response = requests.get(f"https://{ip_address}{url}", params=params, headers=headers, verify=False)
 
     # Filter the response to find email addresses
     pattern = r"<h6>Email</h6>\s*<span class=\"subText\">(.*?)</span>"
