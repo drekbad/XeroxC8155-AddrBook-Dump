@@ -1,9 +1,12 @@
 import argparse
 import requests
 import re
+import urllib3
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Create argument parser
-parser = argparse.ArgumentParser(description="Retrieve email addresses from Xerox printer's Address Book.")
+parser = argparse.ArgumentParser(description="Retrieve email addresses from Xerox AltaLink printer's Address Book.")
 parser.add_argument("-ip", metavar="IP", help="IP address of the Xerox printer")
 parser.add_argument("-n", metavar="NUM_CONTACTS", type=int, help="Number of contacts in the Address Book")
 parser.add_argument("-c", metavar="PHPSESSID", help="PHPSESSID cookie value")
@@ -30,7 +33,7 @@ for contact_id in range(num_contacts):
     contact_url = f"https://{ip_address}{url}?contactId={contact_id}"
 
     # Make the HTTPS request
-    response = requests.get(contact_url, headers=headers)
+    response = requests.get(contact_url, headers=headers, verify=False)
 
     # Extract email address from response
     pattern = r"<h6>Email</h6>\s*<span class=\"subText\">(.*?)</span>"
@@ -47,3 +50,4 @@ with open(output_file, "w") as file:
 
 print(f"Email addresses saved to '{output_file}'")
 print(f"Number of retrieved email addresses: {len(email_list)}")
+
