@@ -1,45 +1,39 @@
 import requests
+import re
 
-# Set the IP address and URL
-ip_address = "127.0.0.1"  # Replace with the actual IP address
+# Get user input
+ip_address = input("Enter the IP address of the Xerox printer: ")
+num_contacts = int(input("Enter the number of contacts in the Address Book: "))
+phpsessid = input("Enter the PHPSESSID cookie value: ")
+
+# Set the URL and headers
 url = "/addressbook/viewContact.php"
-
-# Set the headers
 headers = {
     "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:102.0) Gecko/20100101 Firefox/102.0",
-    "Cookie": "PHPSESSID="  # PHPSESSID value will be provided by user input
+    "Cookie": f"PHPSESSID={phpsessid}"
 }
 
 # Initialize variables
-contact_id = 0
 email_list = []
 
-# Input PHPSESSID value from user
-phpsessid = input("Enter PHPSESSID value: ")
-
-while True:
-    # Set the parameters
-    params = {"contactId": str(contact_id)}
+# Iterate through contacts
+for contact_id in range(num_contacts):
+    # Set the URL with contactId parameter
+    contact_url = f"https://{ip_address}{url}?contactId={contact_id}"
 
     # Make the HTTPS request
-    response = requests.get(f"https://{ip_address}{url}", params=params, headers=headers)
+    response = requests.get(contact_url, headers=headers)
 
-    # Filter the response to find email addresses
-    filtered_response = response.text.replace(" ", "")  # Remove spaces for filtering
-    if "@" in filtered_response:  # Check if an email address is present
-        email_start = filtered_response.find("@")
-        email_end = filtered_response.find(".com", email_start) + 4
-        email = filtered_response[email_start:email_end]
-        email_list.append(email)
+    # Extract email address from response
+    pattern = r"<h6>Email</h6>\s*<span class=\"subText\">(.*?)</span>"
+    matches = re.findall(pattern, response.text)
 
-    # Break the loop if the response doesn't contain any real text
-    if not filtered_response.strip():
-        break
+    if matches:
+        email_list.extend(matches)
 
-    contact_id += 1
+# Save discovered email addresses to a text file
+with open("discovered-addresses.txt", "w") as file:
+    for email in email_list:
+        file.write(email + "\n")
 
-# Save the discovered email addresses to a text file
-with open("discovered-emails.txt", "w") as file:
-    file.write("\n".join(email_list))
-
-print("Email addresses saved to 'discovered-emails.txt'")
+print("Email addresses saved to 'discovered-addresses.txt'")
